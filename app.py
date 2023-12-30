@@ -130,7 +130,7 @@ def generate_alert(message):
     except Exception as e:
         print(f"Failed to send email alert: {e}")
 
-@app.route('/escalate_privileges') 
+@app.route('/escalate_privileges')
 def escalate_privileges():
     user_id = session.get('user_id')
     if user_id:
