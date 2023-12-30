@@ -36,6 +36,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(80), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)  # Add an admin flag
 
 @app.route('/')
 def index():
@@ -102,20 +103,22 @@ def bank():
         flash('You need to login first')
         return redirect(url_for('login'))
 
-    # Increment access attempts for the user
-    bank_access_attempts[user_id] = bank_access_attempts.get(user_id, 0) + 1
+    # Get the user from the database
+    user = User.query.get(user_id)
 
-    # Check if the user is allowed to access the bank page
-    if user_id in ALLOWED_USER_IDS:
-        if bank_access_attempts[user_id] > 3:  # Limit set to 3 for demonstration
-            generate_alert(f"Allowed user {user_id} accessed /bank multiple times")
+    # Check if the user is an admin
+    if user and user.is_admin:
+        # Increment access attempts for the user
+        generate_alert(f"Admin user {user.username} accessed the bank page")
+
+        # Additional logic for admin users (if needed) can go here
+
         return render_template('bank.html')
     else:
-        # Handle unauthorized access attempts
-        if bank_access_attempts[user_id] > 3:  # Limit for unauthorized users
-            generate_alert(f"Unauthorized access attempt by user {user_id} to /bank")
-        flash('You do not have access to this page')
-        return redirect(url_for('index'))  # Redirect to a safe page
+        flash('You do not have admin privileges to access this page')
+        return redirect(url_for('dashboard'))  # Redirect to the dashboard
+
+    return redirect(url_for('dashboard'))  # Redirect to a safe page
 
 
 def generate_alert(message):
@@ -127,7 +130,25 @@ def generate_alert(message):
     except Exception as e:
         print(f"Failed to send email alert: {e}")
 
+@app.route('/escalate_privileges')
+def escalate_privileges():
+    user_id = session.get('user_id')
+    if user_id:
+        user = User.query.get(user_id)
+        if user:
+            # Toggle admin status
+            user.is_admin = not user.is_admin
+            db.session.commit()
+            flash('Privileges have been escalated. Admin status: ' + str(user.is_admin))
 
+            # Send email notification about privilege escalation
+            generate_alert(f"Admin privileges changed for user {user.username}. New status: {user.is_admin}")
+        else:
+            flash('User not found.')
+    else:
+        flash('You need to login first.')
+    
+    return redirect(url_for('dashboard'))
 
 if __name__ == '__main__':
     with app.app_context():
