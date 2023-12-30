@@ -1,11 +1,25 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
+import os
+from flask_mail import Mail, Message
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SECRET_KEY'] = 'your_secret_key'
 db = SQLAlchemy(app)
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USERNAME'] = 'adhdestinies@gmail.com'
+app.config['MAIL_PASSWORD'] = 'ufcjvdlrhjdbhwco' 
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+
+mail = Mail(app)
+
+bank_access_attempts = {}
+ALLOWED_USER_IDS = [1] 
 
 class UserActivity(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -47,6 +61,7 @@ def login():
         password = request.form['password']
         user = User.query.filter_by(username=username, password=password).first()
         if user:
+            session['user_id'] = user.id
             log_activity(user.id, "User logged in")
             analyze_user_behavior(user.id)
             return redirect(url_for('dashboard'))
@@ -66,20 +81,51 @@ def dashboard():
 
 @app.route('/logout')
 def logout():
-    # Here you can implement session logout logic
+    session.pop('user_id', None)  # Remove user_id from session
+    flash('You have been logged out.')
     return redirect(url_for('index'))
+
 
 def analyze_user_behavior(user_id):
     activities = UserActivity.query.filter_by(user_id=user_id).all()
-    # Example analysis: Detect if a user logs in multiple times in a short period
     recent_logins = [act for act in activities if act.activity == "User logged in" and datetime.utcnow() - act.timestamp < timedelta(minutes=5)]
     if len(recent_logins) > 3:
+        print("Atta Ali")
         generate_alert(f"User {user_id} logged in multiple times in a short period.")
+
+@app.route('/bank')
+def bank():
+    user_id = session.get('user_id')
+
+    # Check if the user is logged in
+    if not user_id:
+        flash('You need to login first')
+        return redirect(url_for('login'))
+
+    # Increment access attempts for the user
+    bank_access_attempts[user_id] = bank_access_attempts.get(user_id, 0) + 1
+
+    # Check if the user is allowed to access the bank page
+    if user_id in ALLOWED_USER_IDS:
+        if bank_access_attempts[user_id] > 3:  # Limit set to 3 for demonstration
+            generate_alert(f"Allowed user {user_id} accessed /bank multiple times")
+        return render_template('bank.html')
+    else:
+        # Handle unauthorized access attempts
+        if bank_access_attempts[user_id] > 3:  # Limit for unauthorized users
+            generate_alert(f"Unauthorized access attempt by user {user_id} to /bank")
+        flash('You do not have access to this page')
+        return redirect(url_for('index'))  # Redirect to a safe page
 
 
 def generate_alert(message):
-    print(f"ALERT: {message}")
-    # Here, you can extend this to send email notifications or log to an external system
+    try:
+        msg = Message("Alert from Flask App", sender=app.config['MAIL_USERNAME'], recipients=["commanderata@gmail.com", "muhammedhur@gmail.com"])
+        msg.body = message
+        mail.send(msg)
+        print(f"Email alert sent: {message}")
+    except Exception as e:
+        print(f"Failed to send email alert: {e}")
 
 
 

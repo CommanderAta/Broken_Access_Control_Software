@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Home Page</title>
+    <title>Bank Page</title>
 </head>
 <body>
     {% with messages = get_flashed_messages() %}
@@ -13,7 +13,8 @@
     </ul>
   {% endif %}
 {% endwith %}
-    <h1>Welcome to the Flask App</h1>
-    <a href="/login">Login</a> | <a href="/signup">Sign Up</a>
+    <h1>Welcome to the Bank Page</h1>
+    <p>This is a dummy bank page.</p>
+    <a href="/">Go Back</a>
 </body>
 </html>
