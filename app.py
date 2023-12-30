@@ -42,6 +42,15 @@ class User(db.Model):
 def index():
     return render_template('index.html')
 
+def generate_alert(message):
+    try:
+        msg = Message("Alert from Flask App", sender=app.config['MAIL_USERNAME'], recipients=["commanderata@gmail.com", "muhammedhur@gmail.com"])
+        msg.body = message
+        mail.send(msg)
+        print(f"Email alert sent: {message}")
+    except Exception as e:
+        print(f"Failed to send email alert: {e}")
+
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
@@ -121,14 +130,7 @@ def bank():
     return redirect(url_for('dashboard'))  # Redirect to a safe page
 
 
-def generate_alert(message):
-    try:
-        msg = Message("Alert from Flask App", sender=app.config['MAIL_USERNAME'], recipients=["commanderata@gmail.com", "muhammedhur@gmail.com"])
-        msg.body = message
-        mail.send(msg)
-        print(f"Email alert sent: {message}")
-    except Exception as e:
-        print(f"Failed to send email alert: {e}")
+
 
 @app.route('/escalate_privileges')
 def escalate_privileges():
