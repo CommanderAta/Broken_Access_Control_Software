@@ -2,7 +2,7 @@ name: Update README
 
 on:
   schedule:
-    - cron: '* * * * *' # Runs at midnight UTC every day
+    - cron: '* * * * *'  # Runs every minute
   workflow_dispatch:
 
 jobs:
@@ -19,7 +19,12 @@ jobs:
 
       - name: Update README
         run: |
-          python -c "from datetime import datetime; readme_path = 'README.md'; current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S'); content_to_add = f'Last updated on {current_time}'; with open(readme_path, 'a') as file: file.write('\n' + content_to_add)"
+          python -c "from datetime import datetime
+          readme_path = 'README.md'
+          current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+          content_to_add = f'Last updated on {current_time}'
+          with open(readme_path, 'a') as file:
+              file.write('\\n' + content_to_add)"
 
       - name: Commit changes
         uses: EndBug/add-and-commit@v7
@@ -31,5 +36,4 @@ jobs:
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: 'main' # Replace with your default branch if it's not 'main'
-
+          branch: 'main'  # Replace with your default branch if it's not 'main'
