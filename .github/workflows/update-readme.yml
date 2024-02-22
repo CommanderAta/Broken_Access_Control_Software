@@ -3,6 +3,7 @@ name: Update README
 on:
   schedule:
     - cron: '* * * * *' # Runs at midnight UTC every day
+  workflow_dispatch:
 
 jobs:
   update-readme:
