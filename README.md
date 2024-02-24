@@ -129,3 +129,4 @@ For those interested in delving deeper into the topics of web security and acces
 Thank you for exploring this project. Your feedback and contributions are welcome to improve the understanding and mitigation strategies for broken access control vulnerabilities.
 
  
+ 
